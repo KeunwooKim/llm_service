@@ -1,0 +1,11 @@
+---
+description: Python coding-test study notes for Programmers and company tests
+alwaysApply: true
+---
+
+This repo is a study guide, not a live exam helper.
+
+When adding or editing notes:
+- Prefer original examples. Do not paste Programmers or company problem statements.
+- Show a Python solving process: classify type, pick stdlib, write a template, list pitfalls, give an alternative.
+- Keep explanations in Korean and code in Python 3.10+.
