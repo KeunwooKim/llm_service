@@ -3,15 +3,11 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "screen-solver"
+name = "coding-test-python"
 version = "0.1.0"
-description = "Capture the Mac screen every minute and solve programming problems with Cursor Agent"
+description = "Programmers and coding-test problem types with Python solution patterns"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
-
-[project.scripts]
-screen-solver = "screen_solver.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

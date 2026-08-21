@@ -1,60 +1,70 @@
-# Screen solver
+# 코딩테스트 유형 × 파이썬 풀이
 
-맥북 전체 화면을 1분마다 캡처하고, Cursor Agent가 스크린샷에서 프로그래밍 문제를 찾아 **파이썬 위주 정답**과 **다른 답변**을 터미널에만 출력합니다.
+화면 캡처 도구는 폐기했습니다. 이 저장소는 [프로그래머스 코딩테스트 고득점 Kit](https://school.programmers.co.kr/learn/challenges?tab=algorithm_practice_kit)와 국내 기업 코딩테스트에서 반복되는 유형을 모으고, **파이썬으로 푸는 과정**만 정리합니다.
 
-스크린샷·로그·해설 파일은 남기지 않습니다. 캡처는 시스템 임시 파일로만 만들고, 분석이 끝나면 바로 지웁니다. 프로그래밍 문제가 없으면 아무것도 출력하지 않습니다.
+프로그래머스 문제 원문을 복사하지 않습니다. 유형·판별 기준·표준 라이브러리·템플릿·함정만 둡니다. 실제 문제는 공식 사이트에서 푸세요.
 
-이 프로그램은 **본인 맥의 화면**을 대상으로 합니다. 시험·과제 부정행위용이 아니라, 화면에 보이는 문제를 학습용으로 풀이하는 도구입니다.
+## 조사 요약
 
-## 동작
+프로그래머스 팀이 실제 코딩테스트 결과를 분석해 만든 고득점 Kit는 **10개 유형**입니다.
 
-1. macOS `screencapture -x`로 전체 화면을 임시 PNG로 찍음
-2. 이전 프레임과 같으면 분석을 건너뛰고 임시 파일을 삭제
-3. Cursor Agent CLI(`agent -p --mode ask`)가 이미지를 읽고 문제를 판별
-4. 언어/구현 문제면 파이썬 정답 + 대안 풀이 2개 이상을 **표준 출력에만** 인쇄
-5. 임시 스크린샷을 삭제. `captures/`, `solutions/`, `logs/` 를 만들지 않음
+| 유형 | Kit 문제 수 | 출제 빈도 | 평균 점수 | 파이썬에서 먼저 쓰는 것 |
+| --- | ---: | --- | --- | --- |
+| 해시 | 5 | 높음 | 보통 | `dict`, `Counter` |
+| 스택/큐 | 6 | 보통 | 높음 | `list`, `deque` |
+| 힙 | 3 | 보통 | 높음 | `heapq` |
+| 정렬 | 3 | 높음 | 높음 | `sorted`, `key=` |
+| 완전탐색 | 7 | 높음 | 낮음 | `itertools`, 재귀 |
+| 탐욕법 | 6 | 낮음 | 낮음 | 정렬 + 포인터 |
+| 동적계획법 | 5 | 낮음 | 낮음 | `list` DP 테이블 |
+| DFS/BFS | 7 | 높음 | 낮음 | 재귀 / `deque` |
+| 이분탐색 | 2 | 낮음 | 낮음 | `bisect` 또는 직접 이분 |
+| 그래프 | 3 | 낮음 | 낮음 | 인접 리스트 + BFS |
 
-## 맥북 준비
+Kit에 없지만 실제 코테에서 자주 나오는 유형:
 
-1. **Python 3.10+**
-2. **화면 기록 권한**: 시스템 설정 → 개인정보 보호 및 보안 → 화면 기록에서 `Terminal`, `iTerm`, 또는 `Cursor`를 허용
-3. **Cursor Agent CLI**:
+- 구현·시뮬레이션 (삼성)
+- 문자열 파싱 (카카오)
+- 투 포인터 / 슬라이딩 윈도우
+- 최단경로, 유니온 파인드, MST
+- 백트래킹, 비트마스킹, 트리, 수학
 
-```bash
-curl https://cursor.com/install -fsS | bash
-agent login
-```
+《이것이 취업을 위한 코딩 테스트다》가 정리한 2019년 이전 기업 코테 비중은 구현 33%, DFS/BFS 21%, 그리디 20%, 정렬·DP 각 8% 근처입니다. 최근에도 **구현 + 탐색**이 가장 많이 나옵니다.
+
+## 기업별 경향
+
+| 기업 | 플랫폼 | 경향 |
+| --- | --- | --- |
+| 카카오 | 프로그래머스 | 문자열·구현·그래프, 정확성+효율성 |
+| 네이버 | 프로그래머스 | 유형 혼합, 구현+자료구조 |
+| 라인 | 프로그래머스 | 탐색, 문자열, DP |
+| 삼성 | 백준 / SWEA | 2차원 배열, 시뮬레이션, DFS/BFS |
+| 쿠팡·토스 | LeetCode 스타일 | 최적화, DP |
+
+학습 순서는 Kit 빈도와 점수를 같이 보면 됩니다.
+
+1. 해시, 정렬, 스택/큐 (점수 잘 나옴)
+2. 완전탐색, DFS/BFS (빈도 높은데 점수 낮음 → 연습 효과가 큼)
+3. 힙, 그리디, 이분탐색
+4. DP, 그래프
+5. 지원 기업이 삼성이면 구현·시뮬레이션을 1순위로 올립니다.
+
+## 파이썬 공통 풀이 과정
+
+모든 유형에 같은 순서를 씁니다.
+
+1. **제약 읽기** — `n`이 10이면 O(n!), 100이면 O(n^3), 1e5이면 O(n log n), 1e6이면 O(n).
+2. **유형 판별** — 아래 키워드 표를 봅니다.
+3. **자료구조 선택** — 파이썬 표준 라이브러리부터. 직접 구현은 나중에.
+4. **예제 손풀이** — 한 케이스를 배열/큐에 직접 적어 봅니다.
+5. **템플릿 구현** — `src/coding_test/templates.py`
+6. **엣지** — 빈 입력, 중복, 1-based 인덱스, 오버플로(파이썬 int는 괜찮음).
+
+상세 판별과 유형별 과정은 [docs/types.md](docs/types.md)에 있습니다.
 
 ## 실행
 
-맥 터미널에서 저장소를 **기능 브랜치**로 받은 뒤 실행합니다. `main`에는 이 프로그램이 없습니다.
-
-```bash
-git clone -b cursor/mac-screen-solver-041f https://github.com/KeunwooKim/llm_service.git
-cd llm_service
-PYTHONPATH=src python3 -m screen_solver
-```
-
-이미 클론한 폴더가 있으면:
-
 ```bash
 cd llm_service
-git fetch origin
-git checkout cursor/mac-screen-solver-041f
-PYTHONPATH=src python3 -m screen_solver
-```
-
-| 목적 | 명령 |
-| --- | --- |
-| 1분마다 캡처 + 분석 | `PYTHONPATH=src python3 -m screen_solver` |
-| 한 번만 | `PYTHONPATH=src python3 -m screen_solver --once` |
-| 이미 있는 이미지 분석 | `PYTHONPATH=src python3 -m screen_solver --once --image ./example.png` |
-| 간격 변경 | `PYTHONPATH=src python3 -m screen_solver --interval 60` |
-
-`--image`로 넘긴 원본 파일은 지우지 않습니다. 프로그램이 만든 임시 캡처만 삭제합니다.
-
-## 테스트
-
-```bash
 python3 -m unittest discover -s tests -v
 ```
