@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import heapq
-from collections import Counter, defaultdict, deque
+from collections import Counter, defaultdict, deque, OrderedDict
 from itertools import permutations
 
 
@@ -184,3 +184,125 @@ def max_window_sum(nums: list[int], k: int) -> int:
 def rotate_right(grid: list[list[int]]) -> list[list[int]]:
     """Implementation: 90-degree clockwise rotate."""
     return [list(row) for row in zip(*grid[::-1])]
+
+
+def agents_can_run(n: int, deps: list[list[int]]) -> bool:
+    """Topological sort: True if agent DAG has no cycle."""
+    graph = [[] for _ in range(n)]
+    indeg = [0] * n
+    for a, b in deps:
+        graph[b].append(a)
+        indeg[a] += 1
+    q = deque(i for i in range(n) if indeg[i] == 0)
+    seen = 0
+    while q:
+        cur = q.popleft()
+        seen += 1
+        for nxt in graph[cur]:
+            indeg[nxt] -= 1
+            if indeg[nxt] == 0:
+                q.append(nxt)
+    return seen == n
+
+
+class LRUCache:
+    """Prompt/response cache with O(1) get/put."""
+
+    def __init__(self, capacity: int) -> None:
+        self.cap = capacity
+        self.data: OrderedDict[int, int] = OrderedDict()
+
+    def get(self, key: int) -> int:
+        if key not in self.data:
+            return -1
+        self.data.move_to_end(key)
+        return self.data[key]
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.data:
+            self.data.move_to_end(key)
+        self.data[key] = value
+        if len(self.data) > self.cap:
+            self.data.popitem(last=False)
+
+
+def admit_requests(times: list[int], n: int) -> list[bool]:
+    """Sliding 1-second window rate limit."""
+    window: deque[int] = deque()
+    out: list[bool] = []
+    for t in times:
+        while window and t - window[0] >= 1:
+            window.popleft()
+        if len(window) < n:
+            window.append(t)
+            out.append(True)
+        else:
+            out.append(False)
+    return out
+
+
+def cheapest_model(models: list[list[int]]) -> int:
+    """Hybrid router: min cost, then min latency among available models."""
+    heap: list[tuple[int, int, int]] = []
+    for i, (cost, latency, ok) in enumerate(models):
+        if ok:
+            heapq.heappush(heap, (cost, latency, i))
+    return heap[0][2] if heap else -1
+
+
+def window_success(events: list[list[int]], k: int) -> list[float]:
+    """Recent-k-second success rate after each event."""
+    q: deque[tuple[int, int]] = deque()
+    success = 0
+    out: list[float] = []
+    for t, ok in events:
+        q.append((t, ok))
+        success += ok
+        while q and t - q[0][0] >= k:
+            _, old = q.popleft()
+            success -= old
+        total = len(q)
+        out.append(0.0 if total == 0 else success / total)
+    return out
+
+
+def longest_under_limit(lens: list[int], limit: int) -> int:
+    """RAG chunk: longest subarray whose sum <= limit."""
+    left = total = best = 0
+    for right, width in enumerate(lens):
+        total += width
+        while total > limit:
+            total -= lens[left]
+            left += 1
+        best = max(best, right - left + 1)
+    return best
+
+
+def next_job(queue: list[list[int]], busy: set[int]) -> int:
+    """Worker pool: smallest (priority, arrived_at) job not in busy."""
+    heap: list[tuple[int, int, int]] = []
+    for priority, arrived_at, job_id in queue:
+        if job_id not in busy:
+            heapq.heappush(heap, (priority, arrived_at, job_id))
+    return heap[0][2] if heap else -1
+
+
+def shortest_latency(n: int, edges: list[list[int]]) -> int:
+    """Dijkstra from node 1 to n on an undirected weighted graph."""
+    graph: dict[int, list[tuple[int, int]]] = defaultdict(list)
+    for u, v, w in edges:
+        graph[u].append((v, w))
+        graph[v].append((u, w))
+    dist = [float("inf")] * (n + 1)
+    dist[1] = 0
+    heap = [(0, 1)]
+    while heap:
+        d, cur = heapq.heappop(heap)
+        if d > dist[cur]:
+            continue
+        for nxt, w in graph[cur]:
+            nd = d + w
+            if nd < dist[nxt]:
+                dist[nxt] = nd
+                heapq.heappush(heap, (nd, nxt))
+    return -1 if dist[n] == float("inf") else int(dist[n])

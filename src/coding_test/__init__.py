@@ -1,18 +1,26 @@
 """Python coding-test pattern templates."""
 
 from coding_test.templates import (
+    LRUCache,
+    admit_requests,
+    agents_can_run,
     batch_complete,
     boats_for_people,
+    cheapest_model,
     count_unmatched,
     farthest_count,
     is_valid_brackets,
     kth_in_slices,
+    longest_under_limit,
     max_window_sum,
     min_days_to_pass,
     mix_until_k,
+    next_job,
     prime_from_digits,
     rotate_right,
+    shortest_latency,
     target_ways,
     triangle_max_path,
     two_sum_sorted,
+    window_success,
 )

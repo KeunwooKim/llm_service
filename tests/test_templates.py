@@ -7,20 +7,28 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from coding_test.templates import (
+    LRUCache,
+    admit_requests,
+    agents_can_run,
     batch_complete,
     boats_for_people,
+    cheapest_model,
     count_unmatched,
     farthest_count,
     is_valid_brackets,
     kth_in_slices,
+    longest_under_limit,
     max_window_sum,
     min_days_to_pass,
     mix_until_k,
+    next_job,
     prime_from_digits,
     rotate_right,
+    shortest_latency,
     target_ways,
     triangle_max_path,
     two_sum_sorted,
+    window_success,
 )
 
 
@@ -78,6 +86,39 @@ class ExtraPatternTests(unittest.TestCase):
 
     def test_rotate(self) -> None:
         self.assertEqual(rotate_right([[1, 2], [3, 4]]), [[3, 1], [4, 2]])
+
+
+class AgentPlatformTests(unittest.TestCase):
+    def test_agents_can_run(self) -> None:
+        self.assertTrue(agents_can_run(3, [[1, 0], [2, 1]]))
+        self.assertFalse(agents_can_run(2, [[0, 1], [1, 0]]))
+
+    def test_lru(self) -> None:
+        cache = LRUCache(2)
+        cache.put(1, 10)
+        cache.put(2, 20)
+        self.assertEqual(cache.get(1), 10)
+        cache.put(3, 30)
+        self.assertEqual(cache.get(2), -1)
+
+    def test_rate_limit(self) -> None:
+        self.assertEqual(admit_requests([1, 1, 1, 2], 2), [True, True, False, True])
+
+    def test_cheapest_model(self) -> None:
+        self.assertEqual(cheapest_model([[10, 5, 1], [3, 9, 1], [3, 4, 0]]), 1)
+        self.assertEqual(cheapest_model([[8, 1, 0], [8, 2, 0]]), -1)
+
+    def test_window_success(self) -> None:
+        self.assertEqual(window_success([[1, 1], [2, 0], [4, 1]], 2), [1.0, 0.5, 1.0])
+
+    def test_longest_under_limit(self) -> None:
+        self.assertEqual(longest_under_limit([2, 3, 1, 2, 4], 8), 4)
+
+    def test_next_job(self) -> None:
+        self.assertEqual(next_job([[2, 10, 7], [1, 20, 3], [1, 5, 9]], {9}), 3)
+
+    def test_shortest_latency(self) -> None:
+        self.assertEqual(shortest_latency(3, [[1, 2, 4], [2, 3, 1], [1, 3, 10]]), 5)
 
 
 if __name__ == "__main__":
