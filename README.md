@@ -4,7 +4,7 @@
 
 공식 사이트 문장은 저작권 때문에 복사하지 않았습니다. 같은 유형의 학습용 원문입니다.
 
-**전체 노트:** [docs/coding-test.md](docs/coding-test.md) — 맨 위에 세분 목차와 키워드 빠른 찾기가 있습니다.
+**전체 노트:** [docs/coding-test.md](docs/coding-test.md) — 노션에 넣을 수 있게 제목 단계(H1~H4)와 인용 블록만 썼습니다. 파일을 Import → Markdown 하거나 통째로 붙여넣은 뒤 `/목차`를 치면 됩니다.
 
 ## 조사 요약
 
