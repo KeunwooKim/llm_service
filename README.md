@@ -4,7 +4,7 @@
 
 공식 사이트 문장은 저작권 때문에 복사하지 않았습니다. 같은 유형의 학습용 원문입니다.
 
-**전체 노트:** [docs/coding-test.md](docs/coding-test.md) (알고리즘 + SQL + 개념 + XGEN 직무 코테)
+**전체 노트:** [docs/coding-test.md](docs/coding-test.md) — 맨 위에 세분 목차와 키워드 빠른 찾기가 있습니다.
 
 ## 조사 요약
 
