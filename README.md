@@ -27,8 +27,20 @@ agent login
 
 ## 실행
 
+맥 터미널에서 저장소를 **기능 브랜치**로 받은 뒤 실행합니다. `main`에는 이 프로그램이 없습니다.
+
 ```bash
-cd /path/to/this-repo
+git clone -b cursor/mac-screen-solver-041f https://github.com/KeunwooKim/llm_service.git
+cd llm_service
+PYTHONPATH=src python3 -m screen_solver
+```
+
+이미 클론한 폴더가 있으면:
+
+```bash
+cd llm_service
+git fetch origin
+git checkout cursor/mac-screen-solver-041f
 PYTHONPATH=src python3 -m screen_solver
 ```
 
