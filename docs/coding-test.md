@@ -1,6 +1,6 @@
 # 코딩테스트 학습 노트
 
-프로그래머스·기업 코딩테스트에서 나오는 **유형 / 문제 원문 / 코드**를 한곳에 모았습니다. SQL과 개념 문제도 이 파일에 있습니다.
+프로그래머스·기업 코딩테스트에서 나오는 **유형 / 문제 원문 / 코드**를 한곳에 모았습니다. SQL 기초와 개념 문제도 이 파일에 있습니다.
 
 공식 사이트 문제 문장은 저작권 때문에 복사하지 않았습니다. 같은 유형을 연습할 수 있는 **학습용 원문**입니다. 실제 기출은 [프로그래머스 고득점 Kit](https://school.programmers.co.kr/learn/challenges?tab=algorithm_practice_kit)에서 푸세요.
 
@@ -47,6 +47,21 @@
     - 문제 A. 합이 target인 쌍
     - 문제 B. 길이 k 최대 합
 - SQL
+  - SQL 기초
+    - 무엇을 배우면 되나
+    - 문장 종류
+    - SELECT 작성 순서와 실행 순서
+    - 자료형·별칭·따옴표
+    - NULL
+    - WHERE 조건
+    - 정렬과 행 제한
+    - 집계와 GROUP BY
+    - JOIN
+    - 서브쿼리
+    - CASE와 UNION
+    - 문자열과 날짜
+    - 윈도우 함수
+    - 코테에서 자주 틀리는 것
   - 15. SELECT · WHERE
     - 문제. 고액 연봉자
   - 16. 집계 · GROUP BY
@@ -135,6 +150,15 @@
 | 문자열 압축 | 연속 압축 |
 | 투 포인터 | 합이 target인 쌍 |
 | 슬라이딩 윈도우 | 길이 k 최대 합 |
+| SQL 실행 순서 | SELECT 작성 순서와 실행 순서 |
+| NULL, IS NULL, COALESCE | NULL |
+| WHERE, LIKE, IN | WHERE 조건 |
+| WHERE vs HAVING | 집계와 GROUP BY |
+| INNER/LEFT JOIN | JOIN |
+| EXISTS, 서브쿼리 | 서브쿼리 |
+| CASE, UNION | CASE와 UNION |
+| CONCAT, DATE | 문자열과 날짜 |
+| ROW_NUMBER, RANK | 윈도우 함수 |
 | SQL SELECT | 고액 연봉자 |
 | GROUP BY | 부서별 평균 연봉 |
 | JOIN | 직원과 부서명 |
@@ -615,7 +639,7 @@ def solution(nums, k):
 
 ## SQL
 
-프로그래머스 SQL Kit 흐름(SELECT → 집계 → GROUP BY → JOIN → 문자열/날짜)에 맞춘 학습용 원문입니다. 방언은 일반적인 표준 SQL에 가깝게 적었습니다.
+프로그래머스 SQL Kit 흐름(SELECT → 집계 → GROUP BY → JOIN → 문자열/날짜)에 맞춘 학습용 원문입니다. 방언은 **MySQL에 가깝게** 적었고, 표준과 다른 점만 짧게 표시합니다. ACID·인덱스·정규화는 개념 25번에 있습니다.
 
 공통 스키마:
 
@@ -626,7 +650,368 @@ def solution(nums, k):
 -- users(id, name, joined_at)
 ```
 
+### SQL 기초. 무엇을 배우면 되나
+
+> 유형: SQL / 로드맵
+
+코테 SQL은 거의 전부 `SELECT`입니다. INSERT/UPDATE는 드뭅니다. 합격선을 가르는 것은 문법 암기가 아니라 **NULL, JOIN 중복, WHERE vs HAVING, 날짜 범위**입니다.
+
+| 순서 | 주제 | 코테에서 하는 일 |
+| --- | --- | --- |
+| 1 | SELECT · WHERE · ORDER BY | 필터하고 정렬해서 보기 |
+| 2 | NULL | 빈 값 비교, COUNT, COALESCE |
+| 3 | 집계 · GROUP BY · HAVING | 그룹 통계, 그룹 필터 |
+| 4 | JOIN | 테이블 붙이기, 없는 행 찾기 |
+| 5 | 문자열 · 날짜 | LIKE, 연/월 자르기, 기간 |
+| 6 | 서브쿼리 | 평균보다 큰 값, 존재 여부 |
+| 7 | 윈도우 | 그룹 안 순위, 최근 1건 |
+
+아래 기초를 읽고 15~20번 문제로 확인하세요.
+
+---
+
+### SQL 기초. 문장 종류
+
+> 유형: SQL / DDL · DML · DQL
+
+| 종류 | 하는 일 | 대표 문장 | 코테 |
+| --- | --- | --- | --- |
+| DQL | 조회 | `SELECT` | 거의 전부 |
+| DML | 데이터 변경 | `INSERT` `UPDATE` `DELETE` | 가끔 |
+| DDL | 구조 변경 | `CREATE` `ALTER` `DROP` | 드묾 |
+| DCL | 권한 | `GRANT` `REVOKE` | 거의 없음 |
+| TCL | 트랜잭션 | `COMMIT` `ROLLBACK` | 면접 |
+
+한 문장은 한 일만 합니다. `SELECT` 안에 `UPDATE`를 넣지 않습니다.
+
+---
+
+### SQL 기초. SELECT 작성 순서와 실행 순서
+
+> 유형: SQL / 실행 순서
+
+쓰는 순서와 엔진이 읽는 순서가 다릅니다. `WHERE`에서 별칭을 못 쓰는 이유가 여기 있습니다.
+
+| 쓰는 순서 | 실행 순서 | 하는 일 |
+| --- | --- | --- |
+| 1 `SELECT` | 6 | 어떤 컬럼을 만들지 |
+| 2 `FROM` | 1 | 어떤 테이블에서 |
+| 3 `JOIN` | 2 | 테이블을 어떻게 붙일지 |
+| 4 `WHERE` | 3 | 행 필터 (집계 전) |
+| 5 `GROUP BY` | 4 | 그룹 묶기 |
+| 6 `HAVING` | 5 | 그룹 필터 (집계 후, SELECT보다 앞) |
+| 7 `ORDER BY` | 7 | 정렬 |
+| 8 `LIMIT` | 8 | 앞에서 n행 |
+
+```sql
+-- 가능: HAVING은 집계 뒤라 AVG를 볼 수 있음
+SELECT dept_id, AVG(salary) AS avg_salary
+FROM employees
+WHERE salary >= 0          -- 행 필터. 별칭 avg_salary 사용 불가
+GROUP BY dept_id
+HAVING AVG(salary) >= 4000 -- 그룹 필터. SELECT 별칭을 허용하는 DB도 있음
+ORDER BY avg_salary DESC;  -- 정렬은 SELECT 뒤라 별칭 가능
+```
+
+`DISTINCT`는 `SELECT` 결과를 중복 제거합니다. `ORDER BY`보다 앞입니다.
+
+---
+
+### SQL 기초. 자료형·별칭·따옴표
+
+> 유형: SQL / 자료형
+
+| 종류 | 예 | 코테 메모 |
+| --- | --- | --- |
+| 정수 | `INT`, `BIGINT` | 나눗셈이 정수로 잘릴 수 있음 → `AVG`는 보통 소수 |
+| 소수 | `DECIMAL`, `DOUBLE` | 돈은 `DECIMAL` |
+| 문자열 | `VARCHAR`, `TEXT` | 비교는 대소문자·공백에 민감할 수 있음 |
+| 날짜 | `DATE`, `DATETIME` | 문자열 `'2024-01-01'`과 비교하는 경우가 많음 |
+| 논리 | `BOOLEAN` / `TINYINT` | MySQL은 0/1인 경우가 많음 |
+
+- 문자열·날짜 리터럴은 **작은따옴표** `'kim'`. 큰따옴표는 방언마다 식별자입니다.
+- 별칭: `SELECT salary AS pay` 또는 `SELECT salary pay`. 공백 있는 별칭은 `` `avg salary` `` 또는 `"avg salary"`.
+- 컬럼이 예약어면 백틱으로 감쌉니다: `` `order` ``.
+
+```sql
+SELECT e.name AS employee, e.salary / 12 AS monthly
+FROM employees AS e;
+```
+
+---
+
+### SQL 기초. NULL
+
+> 유형: SQL / NULL
+
+`NULL`은 “값 없음”이지 0이나 `''`가 아닙니다. `NULL`과의 비교는 항상 실패합니다.
+
+| 표현 | 결과 | 쓸 것 |
+| --- | --- | --- |
+| `salary = NULL` | 알 수 없음 (행이 안 나옴) | `salary IS NULL` |
+| `salary <> NULL` | 알 수 없음 | `salary IS NOT NULL` |
+| `1 + NULL` | `NULL` | `COALESCE(salary, 0) + 1` |
+| `COUNT(*)` | 모든 행 수 | 행이 있는지만 볼 때 |
+| `COUNT(dept_id)` | `dept_id`가 NULL이 아닌 행 | NULL 제외 카운트 |
+| `AVG(salary)` | NULL 연봉은 평균에서 제외 | 0으로 넣고 싶으면 `AVG(COALESCE(salary, 0))` |
+
+```sql
+-- NULL을 0으로
+SELECT name, COALESCE(dept_id, 0) AS dept_id
+FROM employees;
+
+-- NOT IN 함정: 서브쿼리에 NULL이 하나라도 있으면 전체가 비는 DB가 많음
+SELECT name FROM employees
+WHERE dept_id NOT IN (SELECT id FROM departments); -- departments.id에 NULL 있으면 위험
+
+-- 안전한 대체
+SELECT e.name
+FROM employees e
+WHERE NOT EXISTS (
+    SELECT 1 FROM departments d WHERE d.id = e.dept_id
+);
+```
+
+`IFNULL(x, y)`는 MySQL, `NVL(x, y)`는 Oracle, 표준은 `COALESCE(x, y, ...)`.
+
+---
+
+### SQL 기초. WHERE 조건
+
+> 유형: SQL / 필터
+
+| 연산 | 예 | 메모 |
+| --- | --- | --- |
+| 비교 | `salary >= 5000` | `=` `<>` `!=` `<` `>` |
+| 논리 | `AND` `OR` `NOT` | `AND`가 `OR`보다 먼저. 애매하면 괄호 |
+| 구간 | `salary BETWEEN 3000 AND 5000` | 양 끝 포함 |
+| 목록 | `dept_id IN (1, 2, 3)` | `NOT IN`은 NULL 주의 |
+| 패턴 | `name LIKE 'Kim%'` | `%` 여러 글자, `_` 한 글자 |
+| 빈 값 | `dept_id IS NULL` | `= NULL` 금지 |
+
+```sql
+-- 2024년 입사, 연봉 4000 이상이거나 부서 없는 사람
+SELECT name, salary, hired_at
+FROM employees
+WHERE hired_at >= '2024-01-01'
+  AND hired_at <  '2025-01-01'
+  AND (salary >= 4000 OR dept_id IS NULL);
+```
+
+`LIKE`는 기본적으로 대소문자를 구분하지 않는 콜레이션도 있고, 구분하는 DB도 있습니다. 코테에서 대소문자 무시라면 `LOWER(name) LIKE '%kim%'`이 안전합니다.
+
+---
+
+### SQL 기초. 정렬과 행 제한
+
+> 유형: SQL / ORDER BY · LIMIT
+
+```sql
+SELECT name, salary
+FROM employees
+ORDER BY salary DESC, name ASC
+LIMIT 10 OFFSET 20;  -- 21번째부터 10명 (페이지)
+```
+
+- `ORDER BY`가 없으면 순서는 보장되지 않습니다.
+- 동점이면 두 번째 키를 적습니다.
+- MySQL에서 `ASC`일 때 `NULL`은 보통 앞, `DESC`면 뒤입니다. 표준은 `NULL` 위치를 `NULLS FIRST/LAST`로 정합니다.
+- `LIMIT`은 MySQL/SQLite, Oracle은 `FETCH FIRST n ROWS ONLY`.
+
+---
+
+### SQL 기초. 집계와 GROUP BY
+
+> 유형: SQL / 집계
+
+| 함수 | 의미 | NULL |
+| --- | --- | --- |
+| `COUNT(*)` | 행 수 | 포함 |
+| `COUNT(col)` | col이 있는 행 | 제외 |
+| `COUNT(DISTINCT col)` | 중복 없는 값 수 | NULL 제외 |
+| `SUM` `AVG` `MIN` `MAX` | 합·평균·최소·최대 | NULL 제외 |
+
+규칙: `SELECT`에 나온 **집계가 아닌 컬럼**은 전부 `GROUP BY`에 있어야 합니다.
+
+```sql
+-- WHERE: 그룹 만들기 전에 행을 버림
+-- HAVING: 그룹을 만든 뒤에 그룹을 버림
+SELECT dept_id, COUNT(*) AS n, AVG(salary) AS avg_salary
+FROM employees
+WHERE salary IS NOT NULL
+GROUP BY dept_id
+HAVING COUNT(*) >= 3
+ORDER BY avg_salary DESC;
+```
+
+`GROUP BY` 없이 `COUNT(*)`만 쓰면 테이블 전체 한 줄입니다. `SUM(salary)`를 `WHERE`에 직접 쓰지 마세요.
+
+---
+
+### SQL 기초. JOIN
+
+> 유형: SQL / JOIN
+
+두 테이블을 키로 붙입니다. 코테에서 대부분 `INNER JOIN`과 `LEFT JOIN`입니다.
+
+| JOIN | 남는 행 |
+| --- | --- |
+| `INNER JOIN` | 양쪽 키가 맞는 행만 |
+| `LEFT JOIN` | 왼쪽은 전부. 오른쪽이 없으면 NULL |
+| `RIGHT JOIN` | 오른쪽 전부. 잘 안 씀. 테이블 순서 바꿔 LEFT로 |
+| `FULL OUTER JOIN` | 양쪽 전부. MySQL은 없음 |
+| `CROSS JOIN` | 곱집합. 실수하면 행이 폭증 |
+| 셀프 조인 | 같은 테이블을 별칭 두 개로 |
+
+```sql
+-- 직원 + 부서명. 부서 없는 직원도 남기려면 LEFT
+SELECT e.name, d.name AS dept
+FROM employees e
+LEFT JOIN departments d ON e.dept_id = d.id;
+
+-- LEFT JOIN 후 오른쪽 컬럼을 WHERE에서 비교하면 INNER가 됩니다
+SELECT e.name
+FROM employees e
+LEFT JOIN departments d ON e.dept_id = d.id
+WHERE d.id IS NULL;          -- "부서 없는 직원" — 맞음 (NULL 검사)
+-- WHERE d.name = 'HR'       -- HR만, 부서 없는 직원은 사라짐
+```
+
+1:N 조인 뒤에 `COUNT(*)`를 하면 자식 행 수만큼 늘어납니다. 주문 수를 세려면 `COUNT(o.id)`, 회원 수를 세려면 `COUNT(DISTINCT u.id)`.
+
+키: `PRIMARY KEY`는 한 행을 유일하게 가리킵니다. `FOREIGN KEY`는 다른 테이블 PK를 가리킵니다. 코테는 제약 없이 컬럼만 주고 JOIN 조건을 글로 줍니다.
+
+---
+
+### SQL 기초. 서브쿼리
+
+> 유형: SQL / 서브쿼리
+
+| 위치 | 이름 | 반환 |
+| --- | --- | --- |
+| `WHERE x > (SELECT ...)` | 스칼라 | 값 1개 |
+| `WHERE x IN (SELECT ...)` | 다중 행 | 목록 |
+| `WHERE EXISTS (SELECT 1 ...)` | 존재 | 있으면 참 |
+| `FROM (SELECT ...) t` | 인라인 뷰 | 테이블처럼 |
+
+```sql
+-- 전체 평균보다 큰 연봉 (비상관: 안쪽을 한 번만)
+SELECT name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);
+
+-- 주문이 있는 회원 (상관: 바깥 행마다 안쪽을 봄)
+SELECT u.id, u.name
+FROM users u
+WHERE EXISTS (
+    SELECT 1 FROM orders o WHERE o.user_id = u.id
+);
+```
+
+`IN`은 목록 소속, `EXISTS`는 “한 줄이라도 있으면 멈춤”이라 NULL·성능에서 더 안전한 경우가 많습니다. 스칼라 서브쿼리가 2줄 이상이면 에러입니다.
+
+---
+
+### SQL 기초. CASE와 UNION
+
+> 유형: SQL / CASE · 집합
+
+```sql
+-- 행마다 분기. ELSE를 안 쓰면 나머지 NULL
+SELECT
+    name,
+    CASE
+        WHEN salary >= 7000 THEN 'high'
+        WHEN salary >= 4000 THEN 'mid'
+        ELSE 'low'
+    END AS band
+FROM employees;
+
+-- UNION: 중복 제거 후 합침. UNION ALL: 그대로 이어 붙임 (더 빠름)
+SELECT id, name FROM employees
+UNION ALL
+SELECT id, name FROM users;
+```
+
+`UNION`하려면 SELECT 컬럼 수·타입이 맞아야 합니다. 정렬은 맨 마지막에 한 번만 둡니다.
+
+---
+
+### SQL 기초. 문자열과 날짜
+
+> 유형: SQL / 문자열 · 날짜
+
+프로그래머스 SQL은 MySQL 함수가 많습니다.
+
+| 목적 | MySQL | 메모 |
+| --- | --- | --- |
+| 이어 붙이기 | `CONCAT(a, b)` | `||`는 Oracle/Postgres |
+| 길이 | `CHAR_LENGTH(s)` | `LENGTH`는 바이트일 수 있음 |
+| 자르기 | `SUBSTRING(s, 1, 3)` | 인덱스는 보통 1부터 |
+| 바꾸기 | `REPLACE(s, 'a', 'b')` | |
+| 공백 | `TRIM(s)` | `LTRIM` `RTRIM` |
+| 대소문자 | `LOWER` `UPPER` | |
+| 연·월 | `YEAR(dt)` `MONTH(dt)` | `DATE_FORMAT(dt, '%Y-%m')` |
+| 기간 | `DATE_ADD(dt, INTERVAL 7 DAY)` | `DATEDIFF(a, b)`는 a-b 일수 |
+| 날짜만 | `DATE(dt)` | DATETIME에서 시각 제거 |
+
+날짜 범위는 `YEAR(joined_at) = 2024`보다 **반열린 구간**이 인덱스에도 유리합니다.
+
+```sql
+WHERE joined_at >= '2024-01-01'
+  AND joined_at <  '2025-01-01'
+```
+
+---
+
+### SQL 기초. 윈도우 함수
+
+> 유형: SQL / WINDOW
+
+집계는 행을 접어 한 줄로 만듭니다. 윈도우는 **행을 남긴 채** 옆에 순위·합을 붙입니다.
+
+```sql
+함수() OVER (
+    PARTITION BY 그룹컬럼   -- 없으면 전체 한 그룹
+    ORDER BY 정렬컬럼
+)
+```
+
+| 함수 | 동점 |
+| --- | --- |
+| `ROW_NUMBER()` | 무조건 1, 2, 3 … (같은 값이어도 다른 번호) |
+| `RANK()` | 1, 1, 3 (다음 번호 건너뜀) |
+| `DENSE_RANK()` | 1, 1, 2 (건너뛰지 않음) |
+| `LAG(col)` / `LEAD(col)` | 이전/다음 행 값 |
+| `SUM(col) OVER (...)` | 그룹 안 누적 또는 전체 합 |
+
+“그룹별 최근 1건”은 `ROW_NUMBER() ... ORDER BY 시간 DESC` 후 `WHERE rn = 1`이 정석입니다. `GROUP BY`만으로는 나머지 컬럼을 고를 수 없습니다.
+
+---
+
+### SQL 기초. 코테에서 자주 틀리는 것
+
+> 유형: SQL / 함정
+
+| 함정 | 맞는 쪽 |
+| --- | --- |
+| `= NULL` | `IS NULL` |
+| `WHERE AVG(salary) > 4000` | `HAVING AVG(salary) > 4000` |
+| SELECT 별칭을 WHERE에서 사용 | 실행 순서상 아직 없음. 반복하거나 HAVING/바깥 쿼리 |
+| LEFT JOIN + `WHERE 오른쪽.col = 값` | INNER가 됨. 없으면 `IS NULL`, 있으면 `ON`에 조건을 넣기 |
+| JOIN 후 `COUNT(*)`로 부모 수 | `COUNT(DISTINCT 부모id)` |
+| `NOT IN (NULL이 있는 목록)` | `NOT EXISTS` |
+| `YEAR(date) = 2024`만 고집 | `>= '2024-01-01' AND < '2025-01-01'` |
+| `ORDER BY` 없음 | 출력 순서를 문제로 주면 반드시 적기 |
+| 정수 `/` | 평균은 `AVG`, 비율은 `* 1.0` 또는 `CAST` |
+| 윈도우 없이 “부서별 1등 행 전체” | `ROW_NUMBER` 서브쿼리 |
+
+풀이 순서: 스키마·원하는 한 줄이 무엇인지 적기 → 필터는 WHERE, 그룹 필터는 HAVING → 붙일 테이블 JOIN → NULL/중복 확인 → 정렬.
+
+---
+
 ### 15. SELECT · WHERE
+
 
 > 유형: SQL / 필터
 
@@ -856,6 +1241,8 @@ HTTPS가 HTTP보다 안전한 이유를 쓰세요.
 ### 25. 데이터베이스
 
 > 유형: 개념 / DB
+
+SQL 문법·실행 순서·JOIN은 위 **SQL 기초**에 있습니다. 여기는 면접용 개념입니다.
 
 #### 문제. ACID
 
