@@ -1,0 +1,16 @@
+---
+description: Analyze the latest Mac screenshot for programming problems
+alwaysApply: true
+---
+
+When the user asks to analyze the current screen, the latest capture, or a screenshot in `captures/`:
+
+1. Read the newest PNG. Prefer `captures/latest.png` if it exists.
+2. Decide whether a programming problem is visible (coding test, homework, quiz, algorithm, language syntax, SQL, data structure).
+3. If there is no programming problem, say so briefly. Do not quote passwords, personal data, or chat contents.
+4. If there is a programming problem:
+   - Restate the visible problem in Korean.
+   - Prefer **Python** for language/syntax/implementation answers.
+   - Give one primary Python solution, then **at least two alternative answers** (another algorithm, another Python style, or a short sketch in another language).
+   - Note complexity and pitfalls.
+5. Write the result to `solutions/latest.md` unless the user asks for chat-only output.
