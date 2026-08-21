@@ -7,5 +7,6 @@ venv/
 .DS_Store
 captures/
 solutions/
+logs/
 dist/
 build/

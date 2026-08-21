@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import io
 import platform
 import sys
 import unittest
@@ -16,10 +16,11 @@ from screen_solver.app import (
     build_agent_command,
     capture_screen,
     file_digest,
+    is_problem_answer,
     parse_args,
-    prune_dir,
+    remove_file,
+    run_loop,
     run_once,
-    write_solution,
 )
 from screen_solver.prompts import ANALYSIS_PROMPT
 
@@ -29,7 +30,7 @@ TINY_PNG = bytes.fromhex(
 )
 
 
-class DigestAndPruneTests(unittest.TestCase):
+class DigestTests(unittest.TestCase):
     def test_file_digest_matches_identical_bytes(self) -> None:
         with TemporaryDirectory() as tmp:
             a = Path(tmp) / "a.png"
@@ -37,19 +38,6 @@ class DigestAndPruneTests(unittest.TestCase):
             a.write_bytes(TINY_PNG)
             b.write_bytes(TINY_PNG)
             self.assertEqual(file_digest(a), file_digest(b))
-
-    def test_prune_keeps_latest_and_newest(self) -> None:
-        with TemporaryDirectory() as tmp:
-            folder = Path(tmp)
-            (folder / "latest.png").write_bytes(TINY_PNG)
-            for index in range(5):
-                path = folder / f"20260101T00000{index}Z.png"
-                path.write_bytes(TINY_PNG)
-                os.utime(path, (index, index))
-            prune_dir(folder, keep=2, pattern="*.png")
-            remaining = sorted(p.name for p in folder.glob("*.png"))
-            self.assertIn("latest.png", remaining)
-            self.assertEqual(len(remaining), 3)
 
 
 class CaptureTests(unittest.TestCase):
@@ -63,9 +51,10 @@ class CaptureTests(unittest.TestCase):
 
 
 class AgentCommandTests(unittest.TestCase):
-    def test_prompt_asks_for_python_and_alternatives(self) -> None:
+    def test_prompt_asks_for_python_and_forbids_files(self) -> None:
         self.assertIn("파이썬", ANALYSIS_PROMPT)
         self.assertIn("다른 답변", ANALYSIS_PROMPT)
+        self.assertIn("디스크에 파일", ANALYSIS_PROMPT)
         self.assertIn("{image_path}", ANALYSIS_PROMPT)
 
     def test_build_agent_command_uses_ask_mode(self) -> None:
@@ -103,60 +92,96 @@ class AgentCommandTests(unittest.TestCase):
 
 
 class RunOnceTests(unittest.TestCase):
-    def test_skips_unchanged_image(self) -> None:
+    def test_skips_unchanged_image_without_agent(self) -> None:
         with TemporaryDirectory() as tmp:
             image = Path(tmp) / "shot.png"
             image.write_bytes(TINY_PNG)
-            settings = parse_args(
-                ["--once", "--capture-only", "--image", str(image), "--captures", tmp]
-            )
+            settings = parse_args(["--once", "--image", str(image)])
             digest = file_digest(image)
-            result = run_once(settings, last_digest=digest)
-            self.assertEqual(result, digest)
+            with patch("screen_solver.app.analyze_with_cursor") as mocked:
+                result_digest, body = run_once(settings, last_digest=digest)
+            mocked.assert_not_called()
+            self.assertEqual(result_digest, digest)
+            self.assertIsNone(body)
+            self.assertTrue(image.exists())
 
-    def test_writes_solution_from_agent(self) -> None:
+    def test_returns_answer_and_does_not_write_files(self) -> None:
         with TemporaryDirectory() as tmp:
             image = Path(tmp) / "shot.png"
             image.write_bytes(TINY_PNG)
-            solutions = Path(tmp) / "solutions"
-            settings = parse_args(
-                [
-                    "--once",
-                    "--image",
-                    str(image),
-                    "--captures",
-                    tmp,
-                    "--solutions",
-                    str(solutions),
-                    "--workspace",
-                    tmp,
-                ]
-            )
+            settings = parse_args(["--once", "--image", str(image), "--workspace", tmp])
             with patch(
                 "screen_solver.app.analyze_with_cursor",
                 return_value="PROBLEM\n```python\nprint(1)\n```\n",
-            ) as mocked:
+            ):
+                digest, body = run_once(settings, last_digest=None)
+            self.assertIsNotNone(digest)
+            self.assertIn("print(1)", body or "")
+            self.assertFalse((Path(tmp) / "solutions").exists())
+            self.assertFalse((Path(tmp) / "captures").exists())
+            self.assertFalse((Path(tmp) / "logs").exists())
+            self.assertTrue(image.exists())
+
+    def test_deletes_owned_temp_capture(self) -> None:
+        created: dict[str, Path] = {}
+
+        def fake_capture(dest: Path) -> Path:
+            dest.write_bytes(TINY_PNG)
+            created["path"] = dest
+            return dest
+
+        settings = parse_args(["--once"])
+        with patch("screen_solver.app.capture_screen", side_effect=fake_capture):
+            with patch(
+                "screen_solver.app.analyze_with_cursor",
+                return_value="PROBLEM\nprint(1)\n",
+            ):
                 run_once(settings, last_digest=None)
-            mocked.assert_called_once()
-            latest = (solutions / "latest.md").read_text(encoding="utf-8")
-            self.assertIn("print(1)", latest)
-            self.assertIn("shot.png", latest)
+        self.assertIn("path", created)
+        self.assertFalse(created["path"].exists())
 
     def test_parse_interval_default_is_one_minute(self) -> None:
         settings = parse_args([])
         self.assertEqual(settings.interval, 60)
         self.assertFalse(settings.once)
-        self.assertFalse(settings.capture_only)
+        self.assertIsNone(settings.image)
 
 
-class WriteSolutionTests(unittest.TestCase):
-    def test_write_solution_adds_header(self) -> None:
+class OutputTests(unittest.TestCase):
+    def test_is_problem_answer(self) -> None:
+        self.assertTrue(is_problem_answer("PROBLEM\ncode"))
+        self.assertFalse(is_problem_answer("NO_PROBLEM"))
+        self.assertFalse(is_problem_answer("hello"))
+
+    def test_once_prints_problem_only(self) -> None:
         with TemporaryDirectory() as tmp:
-            path = Path(tmp) / "out.md"
-            write_solution(path, Path("a.png"), "body")
-            text = path.read_text(encoding="utf-8")
-            self.assertIn("a.png", text)
-            self.assertIn("body", text)
+            image = Path(tmp) / "shot.png"
+            image.write_bytes(TINY_PNG)
+            settings = parse_args(["--once", "--image", str(image)])
+            with patch(
+                "screen_solver.app.analyze_with_cursor",
+                return_value="PROBLEM\nprint(1)\n",
+            ):
+                with patch("sys.stdout", new=io.StringIO()) as stdout:
+                    code = run_loop(settings)
+            self.assertEqual(code, 0)
+            self.assertIn("print(1)", stdout.getvalue())
+
+    def test_once_silent_when_no_problem(self) -> None:
+        with TemporaryDirectory() as tmp:
+            image = Path(tmp) / "shot.png"
+            image.write_bytes(TINY_PNG)
+            settings = parse_args(["--once", "--image", str(image)])
+            with patch(
+                "screen_solver.app.analyze_with_cursor",
+                return_value="NO_PROBLEM",
+            ):
+                with patch("sys.stdout", new=io.StringIO()) as stdout:
+                    run_loop(settings)
+            self.assertEqual(stdout.getvalue(), "")
+
+    def test_remove_file_ignores_missing(self) -> None:
+        remove_file(Path("/tmp/does-not-exist-screen-solver.png"))
 
 
 if __name__ == "__main__":
