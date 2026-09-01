@@ -3,11 +3,21 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "coding-test-python"
+name = "llm-service"
 version = "0.1.0"
-description = "Programmers and coding-test problem types with Python solution patterns"
+description = "Fine-tune a Hugging Face base model and publish it to the Hub"
 readme = "README.md"
 requires-python = ">=3.10"
+
+[project.optional-dependencies]
+llm = [
+    "accelerate",
+    "datasets",
+    "huggingface_hub",
+    "peft",
+    "transformers",
+    "trl",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

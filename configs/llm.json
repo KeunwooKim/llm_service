@@ -1,0 +1,25 @@
+{
+  "project_name": "llm-service",
+  "goal": "",
+  "system_prompt": "",
+  "hub_repo": "",
+  "model": {
+    "base_id": "Qwen/Qwen2.5-1.5B-Instruct",
+    "license_note": "Read the base model card before publishing a derivative."
+  },
+  "data": {
+    "raw_dir": "data/raw",
+    "processed_dir": "data/processed",
+    "sample_path": "data/samples/example.jsonl",
+    "train_name": "train.jsonl",
+    "eval_name": "eval.jsonl"
+  },
+  "train": {
+    "method": "lora",
+    "max_seq_length": 2048,
+    "assistant_only_loss": true
+  },
+  "eval": {
+    "prompt_count": 12
+  }
+}

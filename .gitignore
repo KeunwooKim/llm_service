@@ -7,3 +7,21 @@ venv/
 .DS_Store
 dist/
 build/
+
+# Hugging Face / training
+outputs/*
+!outputs/.gitkeep
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.safetensors
+*.bin
+*.pt
+*.onnx
+adapter_config.json
+adapter_model.safetensors
+wandb/
+.cache/
+hf_cache/
+runs/
