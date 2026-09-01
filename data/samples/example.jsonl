@@ -1,0 +1,2 @@
+{"messages":[{"role":"system","content":"짧은 한국어로 답한다. 모르는 것은 모른다고 한다."},{"role":"user","content":"이 프로젝트는 무엇을 만드나요?"},{"role":"assistant","content":"Hugging Face 베이스 모델을 내 데이터로 미세조정한 뒤 Hub에 올리는 LLM을 만듭니다."}]}
+{"messages":[{"role":"system","content":"짧은 한국어로 답한다. 모르는 것은 모른다고 한다."},{"role":"user","content":"학습 데이터는 어떤 형식인가요?"},{"role":"assistant","content":"한 줄에 messages 배열이 있는 JSONL입니다. role은 system, user, assistant만 씁니다."}]}

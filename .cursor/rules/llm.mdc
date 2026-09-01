@@ -1,0 +1,14 @@
+---
+description: Hugging Face LLM project rules
+alwaysApply: true
+---
+
+This repo builds a user-owned LLM on Hugging Face (fine-tune, then Hub).
+
+When adding LLM code or notes:
+- Do not start SFT/DPO/serving until configs/llm.json has goal, system_prompt, and hub_repo.
+- Do not train from scratch unless the user explicitly asks.
+- Do not put official exam text, copyrighted books, or secrets in training data.
+- Do not commit HF tokens, .env, checkpoints, or safetensors.
+- Keep Korean explanations. Use the messages JSONL schema in src/llm/schema.py.
+- Coding-test notes in docs/coding-test.md are study material, not a corpus.
